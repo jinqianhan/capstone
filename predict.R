@@ -2,119 +2,124 @@
 library(ggplot2); library(reshape2); library(tm); library(slam); library(data.table); library(RWeka); library(magrittr)
 set.seed(314)
 
-## read in data from a connection, and convert data to consistent encoding format.
-twitter <- readLines("en_US.twitter.txt", encoding = "UTF-8")
-twitter <- iconv(twitter, "UTF-8", "ascii", sub = "")
-twitter <- sample(twitter, length(twitter) * 0.02)
+# ## read in data from a connection, and convert data to consistent encoding format.
+# twitter <- readLines("en_US.twitter.txt", encoding = "UTF-8")
+# twitter <- iconv(twitter, "UTF-8", "ascii", sub = "")
+# twitter <- sample(twitter, length(twitter) * 0.02)
+# 
+# blogs <- readLines("en_US.blogs.txt", encoding = "UTF-8")
+# blogs <- iconv(blogs, "UTF-8", "ascii", sub = "")
+# blogs <- sample(blogs, length(blogs) * 0.02)
+# 
+# 
+# conn <- file("en_US.news.txt",open="rb")
+# news <-readLines(conn, encoding="UTF-8")
+# close(conn)
+# rm(conn)
+# news <- iconv(news, "UTF-8", "ascii", sub = "")
+# news <- sample(news, length(news) * 0.02)
+# 
+# cdata <- c(twitter, blogs, news)
+# 
+# 
+# 
+# profanity <- scan("profanity.txt", what = "" ,sep = "\n")
+# 
+# convCorpus <- function(corp) {
+#         corpus <- VCorpus(VectorSource(corp))
+#         corpus <- tm_map(corpus,  content_transformer(tolower))
+#         # corpus <- tm_map(corpus, removeWords, stopwords("english"))  # rm stopwords
+#         corpus <- tm_map(corpus, removePunctuation)
+#         corpus <- tm_map(corpus, removeNumbers)
+#         corpus <- tm_map(corpus, removeWords, profanity)
+#         # corpus <- tm_map(corpus, stemDocument, language = "english")
+#         corpus <- tm_map(corpus, stripWhitespace)
+#         corpus <- tm_map(corpus, PlainTextDocument)
+#         return(corpus) 
+# }
+# 
+# 
+# 
+# 
+# cc <- convCorpus(cdata)
+# cc <- tm_map(cc, PlainTextDocument)
+# 
+# tokenizer <- function(datadoc, n) {
+#         ngramtoken <- function(x) {
+#                 NGramTokenizer(x, Weka_control(min=n, max=n))
+#         }
+#         ngram <- TermDocumentMatrix(datadoc, control = list(tokenize = ngramtoken))
+#         return(ngram)
+# }
+# 
+# 
+# 
+# c2 <- tokenizer(cc, 2)
+# c3 <- tokenizer(cc, 3)
+# c4 <- tokenizer(cc, 4)
 
-blogs <- readLines("en_US.blogs.txt", encoding = "UTF-8")
-blogs <- iconv(blogs, "UTF-8", "ascii", sub = "")
-blogs <- sample(blogs, length(blogs) * 0.02)
+bigram <- read.table("bigram.csv", header=TRUE)
+trigram <- read.table("trigram.csv", header=TRUE)
+fourgram <- read.table("fourgram.csv", header=TRUE)
 
-
-conn <- file("en_US.news.txt",open="rb")
-news <-readLines(conn, encoding="UTF-8")
-close(conn)
-rm(conn)
-news <- iconv(news, "UTF-8", "ascii", sub = "")
-news <- sample(news, length(news) * 0.02)
-
-cdata <- c(twitter, blogs, news)
-
-
-
-profanity <- scan("profanity.txt", what = "" ,sep = "\n")
-
-convCorpus <- function(corp) {
-        corpus <- VCorpus(VectorSource(corp))
-        corpus <- tm_map(corpus,  content_transformer(tolower))
-        # corpus <- tm_map(corpus, removeWords, stopwords("english"))  # rm stopwords
-        corpus <- tm_map(corpus, removePunctuation)
-        corpus <- tm_map(corpus, removeNumbers)
-        corpus <- tm_map(corpus, removeWords, profanity)
-        # corpus <- tm_map(corpus, stemDocument, language = "english")
-        corpus <- tm_map(corpus, stripWhitespace)
-        corpus <- tm_map(corpus, PlainTextDocument)
-        return(corpus) 
-}
-
-
-
-
-cc <- convCorpus(cdata)
-cc <- tm_map(cc, PlainTextDocument)
-
-tokenizer <- function(datadoc, n) {
-        ngramtoken <- function(x) {
-                NGramTokenizer(x, Weka_control(min=n, max=n))
-        }
-        ngram <- TermDocumentMatrix(datadoc, control = list(tokenize = ngramtoken))
-        return(ngram)
-}
-
-
-
-c2 <- tokenizer(cc, 2)
-c3 <- tokenizer(cc, 3)
-c4 <- tokenizer(cc, 4)
-
-tdmToFreq <- function(tdm) {
-        freq <- sort(row_sums(tdm, na.rm=TRUE), decreasing=TRUE)
-        word <- names(freq)
-        data.table(word=word, freq=freq)
-}
-
-processGram <- function(dt) {
-        dt[, c("pre", "cur"):=list(unlist(strsplit(word, "[ ]+?[a-z]+$")), 
-                                   unlist(strsplit(word, "^([a-z]+[ ])+"))[2]), 
-           by=word]
-}
-
+# 
+# tdmToFreq <- function(tdm) {
+#         freq <- sort(row_sums(tdm, na.rm=TRUE), decreasing=TRUE)
+#         word <- names(freq)
+#         data.table(word=word, freq=freq)
+# }
+# 
+# processGram <- function(dt) {
+#         dt[, c("pre", "cur"):=list(unlist(strsplit(word, "[ ]+?[a-z]+$")), 
+#                                    unlist(strsplit(word, "^([a-z]+[ ])+"))[2]), 
+#            by=word]
+# }
+# 
 #finds max frequency ngram and returns word
 maxfreq <- function(freqlist, wd) {
-        if (sum(freqlist[freqlist$pre == wd]$freq) == 0)
+        if (sum(freqlist[freqlist$pre == wd,]$freq) == 0)
                 return (0)
         else {
-                return (freqlist[freqlist$pre == wd & freqlist$freq == max(freqlist[freqlist$pre == wd]$freq)])
+                return (freqlist[freqlist$pre == wd & freqlist$freq == max(freqlist[freqlist$pre == wd,]$freq),])
         }
 }
 
 #corpus bigram
-cFreq2 <- tdmToFreq(c2)
-processGram(cFreq2)
-# de_max <- max(cFreq2[pre=="right"]$freq)
-# cFreq2[pre == "right" & freq == de_max]
-head(cFreq2)
+# cFreq2 <- tdmToFreq(c2)
+# processGram(cFreq2)
+# # de_max <- max(cFreq2[pre=="right"]$freq)
+# # cFreq2[pre == "right" & freq == de_max]
+# head(cFreq2)
 
 predict2 <- function(word) {
-        if (is.null(ncol(maxfreq(cFreq2, word))))
+        if (is.null(ncol(maxfreq(bigram, word))))
                 return (NULL)
-        return (maxfreq(cFreq2, word)$cur[1])
+        return (as.character(maxfreq(bigram, word)$cur[1]))
 }
 
 
 #corpus trigram
-cFreq3 <- tdmToFreq(c3)
-processGram(cFreq3)
-# cFreq3[pre == "right" & freq == de_max]
-head(cFreq3)
+# cFreq3 <- tdmToFreq(c3)
+# processGram(cFreq3)
+# # cFreq3[pre == "right" & freq == de_max]
+# head(cFreq3)
 predict3 <- function(word) {
-        if (is.null(ncol(maxfreq(cFreq3, word))))
+        if (is.null(ncol(maxfreq(trigram, word))))
                 return (NULL)
-        return (maxfreq(cFreq3, word)$cur[1])
+        return (as.character(maxfreq(trigram, word)$cur[1]))
 }
 
 
 
 #corpus 4gram
-cFreq4 <- tdmToFreq(c4)
-processGram(cFreq4)
-# cFreq4[pre == "right" & freq == de_max]
-head(cFreq4)
+# cFreq4 <- tdmToFreq(c4)
+# processGram(cFreq4)
+# # cFreq4[pre == "right" & freq == de_max]
+# head(cFreq4)
 predict4 <- function(word) {
-        if (is.null(ncol(maxfreq(cFreq4, word))))
+        if (is.null(ncol(maxfreq(fourgram, word))))
                 return (NULL)
-        return (maxfreq(cFreq4, word)$cur[1])
+        return (as.character(maxfreq(fourgram, word)$cur[1]))
 }
 
 

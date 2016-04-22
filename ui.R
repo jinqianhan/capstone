@@ -2,35 +2,24 @@ library(shiny)
 
 shinyUI(
         pageWithSidebar(
-                headerPanel("Illustrating inputs and Diabetes prediction"),
+                headerPanel("Coursera Capstone Word Predictor"),
                 # Application title
                 sidebarPanel(
-                        numericInput('id1', 'Numeric input, labeled id1', 0, min = 0, max = 10, step = 1),
-                        checkboxGroupInput("id2", "Checkbox",
-                                           c("Value 1" = "1",
-                                             "Value 2" = "2",
-                                             "Value 3" = "3")),
-                        dateInput("date", "Date:"),
+                        h3("Please allow the predictor a minute or 2 to load"),
+                        textInput("text", label = h2("Type your sentence or phrase"), value = "happy"),
+                        helpText("type in a sentence, and the app will try to predict the next word using stupid backoff model"),
                         
-                        numericInput('glucose', 'Glucose mg/dl', 90, min = 50, max = 200, step = 5),
+                        
                         submitButton('Submit')
                 ),
                 
                 
                 
                 mainPanel(
-                        h3('Illustrating outputs'),
-                        h4('You entered'),
-                        verbatimTextOutput("oid1"),
-                        h4('You entered'),
-                        verbatimTextOutput("oid2"),
-                        h4('You entered'),
-                        verbatimTextOutput("odate"),
-                        
                         h3('Results of prediction'),
                         h4('You entered'),
-                        verbatimTextOutput("inputValue"),
-                        h4('Which resulted in a prediction of '),
+                        verbatimTextOutput("intext"),
+                        h4('I predict the next word is '),
                         verbatimTextOutput("prediction")
                 )
         )

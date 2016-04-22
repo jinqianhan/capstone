@@ -1,14 +1,15 @@
+options(shiny.maxRequestSize=30*1024^2)
 library(shiny)
 source('predict.R')
 
-
 shinyServer(
         function(input, output){
-                output$oid1 <- renderPrint({input$id1})
-                output$oid2 <- renderPrint({input$id2})
-                output$odate <- renderPrint({input$date})
                 
-                output$inputValue <- renderPrint({input$glucose})
-                output$prediction <- renderPrint({diabetesRisk(input$glucose)})
+                predword <- reactive({predict(input$text)})
+                
+                output$intext <- renderPrint({input$text})
+                output$prediction <- renderPrint({
+                        predword()
+                })
         }
 )
